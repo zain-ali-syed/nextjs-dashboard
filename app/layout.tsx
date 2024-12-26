@@ -1,3 +1,6 @@
+import "@/app/ui/global.css";
+import { inter, lusitana } from "./ui/fonts";
+
 export default function RootLayout({
   children,
 }: {
@@ -5,7 +8,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className={inter.className}>
+        <div className="h-20 bg-green-950 text-white">Nav</div>
+        {children}
+      </body>
     </html>
   );
 }
