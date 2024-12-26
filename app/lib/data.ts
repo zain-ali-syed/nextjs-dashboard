@@ -14,7 +14,7 @@ export async function fetchCardDataSupa() {
   try {
     console.log("Fetching  data...");
 
-    //await new Promise((resolve) => setTimeout(resolve, 3000));
+    await new Promise((resolve) => setTimeout(resolve, 3000));
 
     // 1) Total invoices
     const invoiceCountPromise = supabase
@@ -75,7 +75,7 @@ export async function fetchCardDataSupa() {
       pendingData?.reduce((sum, invoice) => sum + invoice.amount, 0) ?? 0
     );
 
-    console.log("Data recieved..");
+    console.log("Card Data recieved..");
 
     return {
       numberOfInvoices: invoiceCount ?? 0,
