@@ -170,53 +170,70 @@ export async function fetchFilteredInvoices(
   const offset = (currentPage - 1) * ITEMS_PER_PAGE;
 
   try {
-    const invoices = await sql<InvoicesTable>`
-      SELECT
-        invoices.id,
-        invoices.amount,
-        invoices.date,
-        invoices.status,
-        customers.name,
-        customers.email,
-        customers.image_url
-      FROM invoices
-      JOIN customers ON invoices.customer_id = customers.id
-      WHERE
-        customers.name ILIKE ${`%${query}%`} OR
-        customers.email ILIKE ${`%${query}%`} OR
-        invoices.amount::text ILIKE ${`%${query}%`} OR
-        invoices.date::text ILIKE ${`%${query}%`} OR
-        invoices.status ILIKE ${`%${query}%`}
-      ORDER BY invoices.date DESC
-      LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
-    `;
+    const { data, error } = await supabase.from("invoices").select(
+      `
+        id,
+        amount,
+        date,
+        status
+      `
+    );
 
-    return invoices.rows;
+    if (error) {
+      console.error("Supabase Error:", error);
+      throw new Error("Failed to fetch invoices.");
+    }
+
+    console.log(data);
+    return data;
   } catch (error) {
-    console.error("Database Error:", error);
+    console.error("Unexpected Error:", error);
     throw new Error("Failed to fetch invoices.");
   }
 }
 
-export async function fetchInvoicesPages(query: string) {
-  try {
-    const count = await sql`SELECT COUNT(*)
-    FROM invoices
-    JOIN customers ON invoices.customer_id = customers.id
-    WHERE
-      customers.name ILIKE ${`%${query}%`} OR
-      customers.email ILIKE ${`%${query}%`} OR
-      invoices.amount::text ILIKE ${`%${query}%`} OR
-      invoices.date::text ILIKE ${`%${query}%`} OR
-      invoices.status ILIKE ${`%${query}%`}
-  `;
+// export async function fetchInvoicesPages(query: string) {
+//   try {
+//     const count = await sql`SELECT COUNT(*)
+//     FROM invoices
+//     JOIN customers ON invoices.customer_id = customers.id
+//     WHERE
+//       customers.name ILIKE ${`%${query}%`} OR
+//       customers.email ILIKE ${`%${query}%`} OR
+//       invoices.amount::text ILIKE ${`%${query}%`} OR
+//       invoices.date::text ILIKE ${`%${query}%`} OR
+//       invoices.status ILIKE ${`%${query}%`}
+//   `;
 
-    const totalPages = Math.ceil(Number(count.rows[0].count) / ITEMS_PER_PAGE);
-    return totalPages;
-  } catch (error) {
-    console.error("Database Error:", error);
-    throw new Error("Failed to fetch total number of invoices.");
+//     const totalPages = Math.ceil(Number(count.rows[0].count) / ITEMS_PER_PAGE);
+//     return totalPages;
+//   } catch (error) {
+//     console.error("Database Error:", error);
+//     throw new Error("Failed to fetch total number of invoices.");
+//   }
+// }
+
+export async function fetchInvoicesPages(query: string) {
+  const { data, count, error } = await supabase.from("invoices").select(
+    `
+        id,
+        amount,
+        date,
+        status
+      `,
+    { count: "exact" } // This includes the total row count in the response
+  );
+
+  if (error) {
+    console.error("Supabase Error:", error);
+    throw new Error("Failed to fetch invoices.");
   }
+
+  console.log("Data:", data); // Selected rows
+  console.log("Total Count:", count); // Total number of records
+  const totalPages = Math.ceil(Number(count! / ITEMS_PER_PAGE));
+  console.log("total paegs ", totalPages);
+  return totalPages;
 }
 
 export async function fetchInvoiceById(id: string) {
@@ -246,16 +263,18 @@ export async function fetchInvoiceById(id: string) {
 
 export async function fetchCustomers() {
   try {
-    const data = await sql<CustomerField>`
-      SELECT
-        id,
-        name
-      FROM customers
-      ORDER BY name ASC
-    `;
+    const { data, count, error } = await supabase.from("customers").select(
+      `
+          id,
+          name,
+          email,
+          image_url
+        `
+    );
 
-    const customers = data.rows;
-    return customers;
+    console.log("Customers");
+    console.log(data);
+    return data;
   } catch (err) {
     console.error("Database Error:", err);
     throw new Error("Failed to fetch all customers.");
